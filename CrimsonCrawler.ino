@@ -108,6 +108,23 @@ static int do_reboot(int argc, char *argv[])
 
 static int do_init(int argc, char *argv[])
 {
+    // shutdown
+    matrix_load(0);
+    for (int i = 0; i < 4; i++) {
+        matrix_shift(0x0C);
+        matrix_shift(1);
+    }
+    matrix_load(1);
+
+    // test mode off
+    matrix_load(0);
+    for (int i = 0; i < 4; i++) {
+        matrix_shift(0x0f);
+        matrix_shift(0);
+    }
+    matrix_load(1);
+    delay(1);
+
     // scan limit
     matrix_load(0);
     for (int i = 0; i < 4; i++) {
@@ -116,14 +133,6 @@ static int do_init(int argc, char *argv[])
     }
     matrix_load(1);
     delay(1);
-
-    // shutdown
-    matrix_load(0);
-    for (int i = 0; i < 4; i++) {
-        matrix_shift(0x0C);
-        matrix_shift(1);
-    }
-    matrix_load(1);
 
     return 0;
 }
@@ -157,14 +166,14 @@ static int do_divider(int argc, char *argv[])
 }
 
 static const cmd_t commands[] = {
-    { "bright", do_bright, "Brightness" },
     { "init", do_init, "Initialise" },
+    { "bright", do_bright, "Brightness" },
+    { "div", do_divider, "Set divider" },
     { "pix", do_pix, "<col> <row> [intensity] Set pixel" },
     { "pat", do_pat, "<pattern> Set pattern" },
     { "fps", do_fps, "Show FPS" },
     { "enable", do_enable, "[0|1] Enable/disable" },
     { "reboot", do_reboot, "Reboot" },
-    { "div", do_divider, "Set divider" },
     { NULL, NULL, NULL }
 };
 
