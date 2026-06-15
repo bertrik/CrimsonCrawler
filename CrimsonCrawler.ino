@@ -35,6 +35,25 @@ static void draw_fill(uint8_t c)
     memset(framebuffer, c, sizeof(framebuffer));
 }
 
+static int set_gamma(float gamma, int min)
+{
+    uint8_t table[256];
+    for (int i = 0; i < 256; i++) {
+        float f = (float) i / 255.0f;
+        f = 255.0f * powf(f, gamma);
+        if (f < min) {
+            f = 0;
+        }
+        table[i] = (uint8_t) f;
+    }
+    for (int i = 0; i < 256; i += 16) {
+        print("%d: %d, ", i, table[i]);
+    }
+    print("\n");
+    led_set_gamma(table);
+    return 0;
+}
+
 static int do_pat(int argc, char *argv[])
 {
     if (argc < 2) {
@@ -165,6 +184,21 @@ static int do_divider(int argc, char *argv[])
     return 0;
 }
 
+static int do_gamma(int argc, char *argv[])
+{
+    if (argc < 2) {
+        return -1;
+    }
+    float gamma = atof(argv[1]);
+    int min = 0;
+    if (argc > 2) {
+        min = atoi(argv[2]);
+    }
+    print("Calculating gamma table for gamma=%s, min=%d\n", argv[1], min);
+    set_gamma(gamma, min);
+    return 0;
+}
+
 static const cmd_t commands[] = {
     { "init", do_init, "Initialise" },
     { "bright", do_bright, "Brightness" },
@@ -173,6 +207,7 @@ static const cmd_t commands[] = {
     { "pat", do_pat, "<pattern> Set pattern" },
     { "fps", do_fps, "Show FPS" },
     { "enable", do_enable, "[0|1] Enable/disable" },
+    { "gamma", do_gamma, "<gamma> [min] Calculate gamma table" },
     { "reboot", do_reboot, "Reboot" },
     { NULL, NULL, NULL }
 };
@@ -187,7 +222,9 @@ static void IRAM_ATTR vsync(int frame_nr)
 void setup(void)
 {
     Serial.begin(115200);
+    set_gamma(2.0, 0);
     led_init(vsync);
+    do_init(0, NULL);
 
 }
 

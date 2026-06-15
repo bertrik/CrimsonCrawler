@@ -11,6 +11,7 @@
 static const vsync_fn_t *vsync_fn;
 static uint8_t framebuffer[8][32];
 static uint8_t pwmbuf[8][32];
+static uint8_t gtable[256];
 static int row = 0;
 static int frame = 0;
 
@@ -72,9 +73,13 @@ static void IRAM_ATTR led_hsync(void)
     }
 }
 
-void IRAM_ATTR led_write_framebuffer(const void *data)
+void led_write_framebuffer(uint8_t data[8][32])
 {
-    memcpy(framebuffer, data, sizeof(framebuffer));
+    for (int y = 0; y < 8; y++) {
+        for (int x = 0; x < 32; x++) {
+            framebuffer[y][x] = gtable[data[y][x]];
+        }
+    }
 }
 
 void led_init(vsync_fn_t *pfn)
@@ -108,7 +113,7 @@ void led_enable(void)
     // set up timer interrupt
     timer1_disable();
     timer1_attachInterrupt(led_hsync);
-    timer1_write(1000);         // fps = 555555/number
+    timer1_write(1000);         // fps = 625000/number
     timer1_enable(TIM_DIV16, TIM_EDGE, TIM_LOOP);
 }
 
@@ -122,4 +127,9 @@ void led_disable(void)
     // detach the interrupt routine
     timer1_detachInterrupt();
     timer1_disable();
+}
+
+void led_set_gamma(const uint8_t *data)
+{
+    memcpy(gtable, data, sizeof(gtable));
 }
